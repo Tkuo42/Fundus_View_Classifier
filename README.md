@@ -13,10 +13,12 @@ A neural network that differentiates between Fundus Eye images.
 <img width="290" alt="TP1" src="https://github.com/Tkuo42/Fundus_View_Classifier/assets/71362962/f2d7c089-fe9a-42bb-91d1-1ca7478affc8">
 
 
-On test set: 
-0.99 AUROC 
-0.1 BCELoss
-Confusion Matrix: 
+On test set: /n
+
+
+0.99 AUROC /n
+0.1 BCELoss /n
+Confusion Matrix: /n
 
 
 ![confusion_matrix](https://github.com/Tkuo42/Fundus_View_Classifier/assets/71362962/4aeee856-9aa1-40e8-b7d8-f1c38366c878)
