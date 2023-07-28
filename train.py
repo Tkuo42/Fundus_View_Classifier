@@ -1,16 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[1]:
-
-
-import sys
-#!{sys.executable} -m pip 
-#!{sys.executable} -m pip install torch==2.0.0 torchvision==0.15.1 torchaudio==2.0.1
-
-
-
-# In[2]:
+# In[ ]:
 
 
 import pandas as pd
@@ -88,25 +79,15 @@ class AverageMeter(object):
 
 do_train=True
 n_iters = 75
-#age_lower = 20
-#age_upper = 100
-disp_labels = ['Good', 'Bad'] # My classifiers are just yes/no 
-print_every = 1
-plot_every = 1
 batch_size = 16
-model_name = 'densenet121-finetuned' # Can test out different pretrained models 
-save_dir = 'Models/' 
-metric_name = 'accuracy' # For me it would be different -- i put accuracy but we will see if that is an option
-predictor = 'middle_sagittal' # Whether the image is good or not 
 lr = 0.0001
-maximize_metric=True
 patience = 5
 early_stop=False
 prev_val_loss = 1e10
 itr = 0
-best_model_dir = None#'/media/Datacenter_storage/BiologicalAge/Code/Models/train/train-23/'
-header_data = '/media/Datacenter_storage/Kowa_Images_rgb/sample_1000/' #Kowa_Images_rgb/sample_1000.csv
-csv_header = '/home/tyler'
+# 
+header_data = 'path-to-your-images' 
+csv_header = 'path-to-csv-file-with-img-name/location'
 # Remember to use absolute paths! 
 
 
@@ -168,14 +149,14 @@ class FundusDataset(Dataset):
 
 # In[6]:
 
-
+# Replace with your csv file if you want to train yourself
 df = pd.read_csv(os.path.join(csv_header + '/good_sample_1000.csv'))
 
 
 # In[7]:
 
-
-with open('fundus_data_new.pkl', 'rb') as fp:
+# Replace with your df of train and test if you want to train yourself
+with open('train_test_valDF.pkl', 'rb') as fp:
     fundus_data = pkl.load(fp)
 df_train = fundus_data['train'].reset_index()
 df_test = fundus_data['test'].reset_index()
@@ -374,7 +355,7 @@ for epoch in range(n_iters):
     
     if  valid_losses.avg < min_val_acc:
         min_val_acc = valid_losses.avg
-        torch.save(model.state_dict(), 'Models/model2/model_2_best.pt')
+        torch.save(model.state_dict(), 'best-model.pt')
 
    
 print('Finished Training')
@@ -397,7 +378,7 @@ plt.legend(['Val_acc', 'Train_acc'], loc = 3)
 plt.title('AUROC Over Epoch')
 plt.ylabel('AUROC')
 plt.xlabel('Epoch')
-plt.savefig('Models/model2/model2_AUROC.png')
+plt.savefig('stats/AUROC.png')
 plt.show()
 
 
@@ -411,172 +392,6 @@ plt.legend([ 'train_loss', 'val_loss'], loc = 3)
 plt.title('Loss over Epoch')
 plt.ylabel('BCELoss')
 plt.xlabel('Epoch')
-plt.savefig('Models/model2/model2.BCELoss.png')
+plt.savefig('stats/BCELoss.png')
 plt.show()
-
-
-# # Remember to do test dataset as well 
-
-# In[21]:
-
-
-model = models.densenet201(pretrained = False)
-model.classifier = nn.Sequential(
-    nn.Dropout(0.6),
-    nn.Linear(model.classifier.in_features, 1)
-)
-model.load_state_dict(torch.load('Models/model2/model_2_best.pt'))
-model.to(device)
-model.eval()
-
-
-# In[22]:
-
-
-y_pred = []
-y_true = []
-y_prob= None
-test_losses = AverageMeter()
-
-
-with torch.no_grad():
-    for inputs, labels in tqdm(test_loader):
-        labels = labels.type(torch.LongTensor)
-        inputs, labels = Variable(inputs, requires_grad = True).to(device), Variable(labels, requires_grad = False).to(device)
-        labels = labels.unsqueeze(1)
-        labels = labels.float()
-            
-        output = model(inputs)
-                
-        sig = nn.Sigmoid()
-        probs = sig(output).cpu().detach().numpy()
-        
-        if y_prob is None:
-            y_prob = probs
-        else:
-            y_prob = np.concatenate((y_prob, probs), axis=0)
-        
-        pred = (torch.from_numpy(probs) > 0.5).float()
-        y_pred += pred
-        y_true += list(labels.cpu().detach().numpy().astype(int))
-        loss = criterion(output, labels)
-        test_losses.update(loss.item(), inputs.size(0))
-
-        
-roc_score = roc_auc_score(y_true, y_prob)
-
-print(f'ROC Score: {roc_score}')
-print(f'Loss Score: {test_losses.avg}')
-
-plt.bar(['AUROC', 'BCELoss'],[roc_score, test_losses.avg])
-plt.savefig(os.path.join('Models/model2', 'stats.png'))
-plt.show()
-
-
-cm = confusion_matrix(y_true, y_pred)
-print(cm)
-
-disp = ConfusionMatrixDisplay(confusion_matrix=cm,  display_labels=np.array(['0', '1']))
-disp.plot()
-plt.savefig(os.path.join('Models/model2', "confusion_matrix.png"))
-
-
-# In[23]:
-
-
-df_true = pd.DataFrame(y_true)
-df_true
-df_test['LABEL'][54]
-
-
-# In[24]:
-
-
-df_prob = pd.DataFrame(y_prob)
-
-
-# In[25]:
-
-
-b = df_prob[df_prob[0] > 0.6]
-
-
-# In[26]:
-
-
-a= df_true[df_true[0] == 0]
-
-
-# In[27]:
-
-
-a = (a).dropna()
-b = b.dropna()
-(a + b).dropna()
-
-
-# In[29]:
-
-
-img = io.imread(os.path.join(header_data, df_test['key'][139]))
-print(df_test["key"][139])
-
-plt.imshow(img)
-#print(df_test['LABEL'][178])
-
-
-# In[ ]:
-
-
-# Me: 3, 6, 14, 22, 26, 29, 30, 44, 47, 54, 72, 73, 86, 96, 99, 102, 103, 113, 120, 122, 123, 145, 156   
-# Ami: 26?
-# Bhavik: 26?
-# Model Wrong: 62, 147, 178 
-
-
-# In[ ]:
-
-
-# Me: 
-# Model Wrong: 31, 40, 110, 116, 148, 192 
-
-
-# In[ ]:
-
-
-c = df_prob[df_prob[0] < 0.4]
-d = df_true[df_true[0] == 1]
-
-c = c.dropna()
-d = d.dropna()
-
-(c + d).dropna()
-
-
-# In[ ]:
-
-
-df_test['LABEL'][df_test['LABEL'] == True].count()
-
-
-# In[ ]:
-
-
-img = io.imread(os.path.join(header_data, df_test['key'][192]))
-
-plt.imshow(img)
-print(df_test["key"][192])
-print(df_test['LABEL'][192])
-
-
-# In[ ]:
-
-
-df_val['LABEL'][df_val['LABEL'] == True].count()
-
-
-# In[ ]:
-
-
-
 
