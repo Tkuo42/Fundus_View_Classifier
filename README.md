@@ -15,7 +15,7 @@ A neural network that differentiates between Fundus Eye images.
 # How to use 
 
 Requirements 
-1. Have a csv file with a column "key" that has the names of the images
+1. Have a csv file with a column "key" that has the names of the images, place this file in data/csv
 2. Place images in folder 'data/samples'
 3. Edit the csv file name in 'test.py'
 
