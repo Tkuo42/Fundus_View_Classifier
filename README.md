@@ -25,4 +25,6 @@ On test set:
 Confusion Matrix: 
 
 
+
+
 ![confusion_matrix](https://github.com/Tkuo42/Fundus_View_Classifier/assets/71362962/4aeee856-9aa1-40e8-b7d8-f1c38366c878)
